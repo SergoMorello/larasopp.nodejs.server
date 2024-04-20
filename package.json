@@ -1,0 +1,22 @@
+{
+  "name": "larasopp-nodejs",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc && node ."
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/ws": "^8.5.10",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "https": "^1.0.0",
+    "url": "^0.11.3",
+    "ws": "^8.16.0"
+  }
+}
