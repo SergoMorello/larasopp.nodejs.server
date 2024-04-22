@@ -1,5 +1,5 @@
 {
-  "name": "larasopp-nodejs",
+  "name": "larasopp-server",
   "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
@@ -7,7 +7,7 @@
     "build": "tsc",
     "start": "tsc && node ."
   },
-  "author": "",
+  "author": "Sergey Serov",
   "license": "MIT",
   "devDependencies": {
     "@types/ws": "^8.5.10",
