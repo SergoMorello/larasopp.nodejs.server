@@ -5,20 +5,51 @@ type TChannels = {
 	[name: string]: WebSocket[];
 };
 
+type TConfig = {
+	token: string;
+	port: number;
+	controllPort: number;
+	appHost: string;
+};
+
 type TChannelAccess = 'private' | 'public' | 'protected';
 
 class App {
 	private wss: WebSocket.Server;
 	private channels: TChannels;
 	private token?: string;
+	private config: TConfig;
 	
 	constructor() {
 		this.channels = {};
+		this.config = {
+			appHost: 'http://127.0.0.1:8000',
+			token: '1234',
+			port: 3001,
+			controllPort: 8123
+		};
 		this.wss = new WebSocket.Server({
-			port: 3001
+			port: this.config.port
 		});
 	
 		this.wss.on('connection', (ws, request) => {
+			const controllToken = new URLSearchParams(request.url ?? '').get('/controll_token')?.toString();
+
+			if (controllToken === this.config.token) {
+				ws.on('message', (val) => {
+					const message = val.toString();
+					const data = JSON.parse(message);
+					if (data.channel && data.event && data.message) {
+						if (this.channels[data.channel]) {
+							this.channels[data.channel].forEach((client) => {
+								client.send(message);
+							});
+						}
+					}
+				});
+				return;
+			}
+
 			this.token = new URLSearchParams(request.url ?? '').get('/token')?.toString();
 
 			console.log('new client');
@@ -46,22 +77,22 @@ class App {
 	private async authChannel(channel: string) {
 
 		try {
-			const result = await axios.post('http://127.0.0.1:8000/broadcasting/auth', {
+			const result = await axios.post(this.config.appHost + '/broadcasting/auth', {
 				channel
 			},{
 				headers: {
 					"Content-Type": "application/json"
 				}
 			});
-			console.log(result.data)
+			return result.data.success ?? false;
 		}catch(e) {
-			console.error(e);
+			return false;
 		}
 		
 	}
 
-	private subscribe(channel: string, socket: WebSocket) {
-		this.authChannel(channel);
+	private async subscribe(channel: string, socket: WebSocket) {
+		if (!(await this.authChannel(channel))) return;
 		if (!this.channels[channel]) {
 			this.channels[channel] = [];
 		}

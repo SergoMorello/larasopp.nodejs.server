@@ -17,12 +17,33 @@ const axios_1 = __importDefault(require("axios"));
 class App {
     constructor() {
         this.channels = {};
+        this.config = {
+            appHost: 'http://127.0.0.1:8000',
+            token: '1234',
+            port: 3001,
+            controllPort: 8123
+        };
         this.wss = new ws_1.default.Server({
-            port: 3001
+            port: this.config.port
         });
         this.wss.on('connection', (ws, request) => {
-            var _a, _b;
-            this.token = (_b = new URLSearchParams((_a = request.url) !== null && _a !== void 0 ? _a : '').get('/token')) === null || _b === void 0 ? void 0 : _b.toString();
+            var _a, _b, _c, _d;
+            const controllToken = (_b = new URLSearchParams((_a = request.url) !== null && _a !== void 0 ? _a : '').get('/controll_token')) === null || _b === void 0 ? void 0 : _b.toString();
+            if (controllToken === this.config.token) {
+                ws.on('message', (val) => {
+                    const message = val.toString();
+                    const data = JSON.parse(message);
+                    if (data.channel && data.event && data.message) {
+                        if (this.channels[data.channel]) {
+                            this.channels[data.channel].forEach((client) => {
+                                client.send(message);
+                            });
+                        }
+                    }
+                });
+                return;
+            }
+            this.token = (_d = new URLSearchParams((_c = request.url) !== null && _c !== void 0 ? _c : '').get('/token')) === null || _d === void 0 ? void 0 : _d.toString();
             console.log('new client');
             ws.on('close', () => {
                 console.log('client leave');
@@ -44,29 +65,33 @@ class App {
     }
     authChannel(channel) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             try {
-                const result = yield axios_1.default.post('http://127.0.0.1:8000/broadcasting/auth', {
+                const result = yield axios_1.default.post(this.config.appHost + '/broadcasting/auth', {
                     channel
                 }, {
                     headers: {
                         "Content-Type": "application/json"
                     }
                 });
-                console.log(result.data);
+                return (_a = result.data.success) !== null && _a !== void 0 ? _a : false;
             }
             catch (e) {
-                console.error(e);
+                return false;
             }
         });
     }
     subscribe(channel, socket) {
-        this.authChannel(channel);
-        if (!this.channels[channel]) {
-            this.channels[channel] = [];
-        }
-        if (!this.hasChannelClient(channel, socket)) {
-            this.channels[channel].push(socket);
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!(yield this.authChannel(channel)))
+                return;
+            if (!this.channels[channel]) {
+                this.channels[channel] = [];
+            }
+            if (!this.hasChannelClient(channel, socket)) {
+                this.channels[channel].push(socket);
+            }
+        });
     }
     unsubscribe(channel, socket) {
         if (this.channels[channel]) {
