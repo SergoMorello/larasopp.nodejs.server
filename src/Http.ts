@@ -1,8 +1,6 @@
 import axios from "axios";
 import type {
-	TConfig,
-	TChannelAccess,
-	TChannels
+	TConfig
 } from "./types";
 
 class Http {
@@ -18,7 +16,8 @@ class Http {
 			const result = await axios.post(this.config.appHost + '/broadcasting/' + path, data ,{
 				headers: {
 					'Content-Type': 'application/json',
-					'X-Socket-ID': this.config.token,
+					// 'X-Socket-ID': this.config.token,
+					'Controll-Token': this.config.token,
 					'Authorization': 'Bearer ' + this.token
 				}
 			});

@@ -1,6 +1,6 @@
-import type WebSocket from "ws";
+import type Client from "./Client";
 export type TChannels = {
-	[name: string]: WebSocket[];
+	[name: string]: Client[];
 };
 
 export type TConfig = {

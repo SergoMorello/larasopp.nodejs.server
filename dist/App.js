@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ws_1 = __importDefault(require("ws"));
-const Http_1 = __importDefault(require("./Http"));
+const Client_1 = __importDefault(require("./Client"));
 class App {
     constructor() {
         this.channels = {};
@@ -26,10 +26,17 @@ class App {
         this.wss = new ws_1.default.Server({
             port: this.config.port
         });
-        this.http = new Http_1.default(this.config);
+        this.run();
+    }
+    run() {
+        this.wss.on('listening', () => {
+            console.info('listening...');
+        });
         this.wss.on('connection', (ws, request) => {
-            var _a, _b, _c, _d;
+            var _a, _b, _c, _d, _e;
+            const client = new Client_1.default(ws, this.config);
             const controllToken = (_b = new URLSearchParams((_a = request.url) !== null && _a !== void 0 ? _a : '').get('/controll_token')) === null || _b === void 0 ? void 0 : _b.toString();
+            console.log(((_c = this.channels['test']) !== null && _c !== void 0 ? _c : []).length);
             if (controllToken === this.config.token) {
                 ws.on('message', (val) => {
                     const message = val.toString();
@@ -44,48 +51,48 @@ class App {
                 });
                 return;
             }
-            const token = (_d = new URLSearchParams((_c = request.url) !== null && _c !== void 0 ? _c : '').get('/token')) === null || _d === void 0 ? void 0 : _d.toString();
+            const token = (_e = new URLSearchParams((_d = request.url) !== null && _d !== void 0 ? _d : '').get('/token')) === null || _e === void 0 ? void 0 : _e.toString();
             if (token) {
-                this.http.setToken(token);
+                client.setToken(token);
             }
             console.log('new client');
             ws.on('close', () => {
                 console.log('client leave');
                 Object.keys(this.channels).forEach((channel) => {
-                    this.unsubscribe(channel, ws);
+                    this.unsubscribe(channel, client);
                 });
             });
             ws.on('message', (val) => {
                 const message = val.toString();
                 const data = JSON.parse(message);
                 if (data.subscribe)
-                    this.subscribe(data.subscribe, ws);
+                    this.subscribe(data.subscribe, client);
                 if (data.unsubscribe)
-                    this.unsubscribe(data.unsubscribe, ws);
+                    this.unsubscribe(data.unsubscribe, client);
                 if (data.channel && data.event && data.message && data.type)
-                    this.message(data.channel, data.event, message, data.type, ws);
+                    this.message(data.channel, data.event, message, data.type, client);
             });
         });
     }
-    subscribe(channel, socket) {
+    subscribe(channel, client) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!(yield this.http.check(channel)))
+            if (!(yield client.check(channel)))
                 return;
             if (!this.channels[channel]) {
                 this.channels[channel] = [];
             }
-            if (!this.hasChannelClient(channel, socket)) {
-                this.channels[channel].push(socket);
+            if (!this.hasChannelClient(channel, client)) {
+                this.channels[channel].push(client);
             }
         });
     }
-    unsubscribe(channel, socket) {
+    unsubscribe(channel, client) {
         if (this.channels[channel]) {
-            this.channels[channel] = this.channels[channel].filter((client) => client !== socket);
+            this.channels[channel] = this.channels[channel].filter((currentClient) => currentClient !== client);
         }
     }
-    message(channel, event, message, access, socket) {
-        if (this.channels[channel] && this.hasChannelClient(channel, socket)) {
+    message(channel, event, message, access, client) {
+        if (this.channels[channel] && this.hasChannelClient(channel, client)) {
             if (access === 'public' || access === 'protected') {
                 this.channels[channel].forEach((client) => {
                     client.send(message);
@@ -93,12 +100,12 @@ class App {
             }
             if (access === 'public' || access === 'private') {
                 const data = JSON.parse(message);
-                this.http.trigger(channel, event, data.message);
+                client.trigger(channel, event, data.message);
             }
         }
     }
-    hasChannelClient(channel, socket) {
-        return this.channels[channel].includes(socket);
+    hasChannelClient(channel, client) {
+        return this.channels[channel].includes(client);
     }
 }
 ;
