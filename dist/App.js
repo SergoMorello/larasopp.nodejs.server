@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ws_1 = __importDefault(require("ws"));
-const axios_1 = __importDefault(require("axios"));
+const Http_1 = __importDefault(require("./Http"));
 class App {
     constructor() {
         this.channels = {};
@@ -26,6 +26,7 @@ class App {
         this.wss = new ws_1.default.Server({
             port: this.config.port
         });
+        this.http = new Http_1.default(this.config);
         this.wss.on('connection', (ws, request) => {
             var _a, _b, _c, _d;
             const controllToken = (_b = new URLSearchParams((_a = request.url) !== null && _a !== void 0 ? _a : '').get('/controll_token')) === null || _b === void 0 ? void 0 : _b.toString();
@@ -59,31 +60,13 @@ class App {
                 if (data.unsubscribe)
                     this.unsubscribe(data.unsubscribe, ws);
                 if (data.channel && data.event && data.message && data.type)
-                    this.message(data.channel, message, data.type, ws);
+                    this.message(data.channel, data.event, message, data.type, ws);
             });
-        });
-    }
-    authChannel(channel) {
-        return __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            try {
-                const result = yield axios_1.default.post(this.config.appHost + '/broadcasting/auth', {
-                    channel
-                }, {
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                });
-                return (_a = result.data.success) !== null && _a !== void 0 ? _a : false;
-            }
-            catch (e) {
-                return false;
-            }
         });
     }
     subscribe(channel, socket) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!(yield this.authChannel(channel)))
+            if (!(yield this.http.check(channel)))
                 return;
             if (!this.channels[channel]) {
                 this.channels[channel] = [];
@@ -98,12 +81,16 @@ class App {
             this.channels[channel] = this.channels[channel].filter((client) => client !== socket);
         }
     }
-    message(channel, message, access, socket) {
+    message(channel, event, message, access, socket) {
         if (this.channels[channel] && this.hasChannelClient(channel, socket)) {
             if (access === 'public' || access === 'protected') {
                 this.channels[channel].forEach((client) => {
                     client.send(message);
                 });
+            }
+            if (access === 'public' || access === 'private') {
+                const data = JSON.parse(message);
+                this.http.trigger(channel, event, data.message);
             }
         }
     }

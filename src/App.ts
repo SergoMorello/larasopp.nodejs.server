@@ -1,21 +1,14 @@
 import WebSocket from "ws";
-import axios from "axios";
-
-type TChannels = {
-	[name: string]: WebSocket[];
-};
-
-type TConfig = {
-	token: string;
-	port: number;
-	controllPort: number;
-	appHost: string;
-};
-
-type TChannelAccess = 'private' | 'public' | 'protected';
+import Http from "./Http";
+import type {
+	TConfig,
+	TChannelAccess,
+	TChannels
+} from "./types";
 
 class App {
 	private wss: WebSocket.Server;
+	private http: Http;
 	private channels: TChannels;
 	private token?: string;
 	private config: TConfig;
@@ -28,9 +21,12 @@ class App {
 			port: 3001,
 			controllPort: 8123
 		};
+
 		this.wss = new WebSocket.Server({
 			port: this.config.port
 		});
+
+		this.http = new Http(this.config);
 	
 		this.wss.on('connection', (ws, request) => {
 			const controllToken = new URLSearchParams(request.url ?? '').get('/controll_token')?.toString();
@@ -68,31 +64,14 @@ class App {
 
 				if (data.unsubscribe) this.unsubscribe(data.unsubscribe, ws);
 
-				if (data.channel && data.event && data.message && data.type) this.message(data.channel, message, data.type, ws);
+				if (data.channel && data.event && data.message && data.type) this.message(data.channel, data.event, message, data.type, ws);
 			});
 		});
 
 	}
 
-	private async authChannel(channel: string) {
-
-		try {
-			const result = await axios.post(this.config.appHost + '/broadcasting/auth', {
-				channel
-			},{
-				headers: {
-					"Content-Type": "application/json"
-				}
-			});
-			return result.data.success ?? false;
-		}catch(e) {
-			return false;
-		}
-		
-	}
-
 	private async subscribe(channel: string, socket: WebSocket) {
-		if (!(await this.authChannel(channel))) return;
+		if (!(await this.http.check(channel))) return;
 		if (!this.channels[channel]) {
 			this.channels[channel] = [];
 		}
@@ -107,12 +86,16 @@ class App {
 		}
 	}
 
-	private message(channel: string, message: string, access: TChannelAccess, socket: WebSocket) {
+	private message(channel: string, event: string, message: string, access: TChannelAccess, socket: WebSocket) {
 		if (this.channels[channel] && this.hasChannelClient(channel, socket)) {
 			if (access === 'public' || access === 'protected') {
 				this.channels[channel].forEach((client) => {
 					client.send(message);
 				});
+			}
+			if (access === 'public' || access === 'private') {
+				const data = JSON.parse(message);
+				this.http.trigger(channel, event, data.message);
 			}
 		}
 	}
