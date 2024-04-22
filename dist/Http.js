@@ -23,7 +23,8 @@ class Http {
                 const result = yield axios_1.default.post(this.config.appHost + '/broadcasting/' + path, data, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Controll-Token': this.config.token
+                        'X-Socket-ID': this.config.token,
+                        'Authorization': 'Bearer ' + this.token
                     }
                 });
                 return result.data;
@@ -44,9 +45,13 @@ class Http {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
             return (_b = (_a = (yield this.request('auth', {
-                channel
+                channel,
+                token: this.config.token
             }))) === null || _a === void 0 ? void 0 : _a.success) !== null && _b !== void 0 ? _b : false;
         });
+    }
+    setToken(token) {
+        this.token = token;
     }
 }
 exports.default = Http;

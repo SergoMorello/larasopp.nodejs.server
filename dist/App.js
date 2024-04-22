@@ -44,7 +44,10 @@ class App {
                 });
                 return;
             }
-            this.token = (_d = new URLSearchParams((_c = request.url) !== null && _c !== void 0 ? _c : '').get('/token')) === null || _d === void 0 ? void 0 : _d.toString();
+            const token = (_d = new URLSearchParams((_c = request.url) !== null && _c !== void 0 ? _c : '').get('/token')) === null || _d === void 0 ? void 0 : _d.toString();
+            if (token) {
+                this.http.setToken(token);
+            }
             console.log('new client');
             ws.on('close', () => {
                 console.log('client leave');

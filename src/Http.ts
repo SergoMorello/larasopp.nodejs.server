@@ -6,7 +6,8 @@ import type {
 } from "./types";
 
 class Http {
-	private config;
+	private config: TConfig;
+	private token?: string;
 
 	constructor(config: TConfig) {
 		this.config = config;
@@ -17,7 +18,8 @@ class Http {
 			const result = await axios.post(this.config.appHost + '/broadcasting/' + path, data ,{
 				headers: {
 					'Content-Type': 'application/json',
-					'Controll-Token': this.config.token
+					'X-Socket-ID': this.config.token,
+					'Authorization': 'Bearer ' + this.token
 				}
 			});
 			return result.data;
@@ -34,8 +36,13 @@ class Http {
 
 	public async check(channel: string) {
 		return (await this.request('auth', {
-			channel
+			channel,
+			token: this.config.token
 		}))?.success ?? false;
+	}
+
+	public setToken(token: string) {
+		this.token = token;
 	}
 
 }

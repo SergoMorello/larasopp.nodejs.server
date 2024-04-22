@@ -10,7 +10,6 @@ class App {
 	private wss: WebSocket.Server;
 	private http: Http;
 	private channels: TChannels;
-	private token?: string;
 	private config: TConfig;
 	
 	constructor() {
@@ -46,7 +45,10 @@ class App {
 				return;
 			}
 
-			this.token = new URLSearchParams(request.url ?? '').get('/token')?.toString();
+			const token = new URLSearchParams(request.url ?? '').get('/token')?.toString();
+			if (token) {
+				this.http.setToken(token);
+			}
 
 			console.log('new client');
 			ws.on('close', () => {
