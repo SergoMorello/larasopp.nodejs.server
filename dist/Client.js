@@ -19,9 +19,16 @@ class Client {
         this.ws = ws;
         this.socketId = (0, uuid_1.v4)();
         this.http = new Http_1.default(config, this.socketId);
+        this.send({
+            socket_id: this.socketId
+        });
     }
     send(message) {
-        this.ws.send(message);
+        try {
+            const sendMessage = typeof message === 'string' ? message : JSON.stringify(message);
+            this.ws.send(sendMessage);
+        }
+        catch (e) { }
     }
     setToken(token) {
         this.http.setToken(token);
