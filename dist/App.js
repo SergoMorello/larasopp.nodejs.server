@@ -33,10 +33,9 @@ class App {
             console.info('listening...');
         });
         this.wss.on('connection', (ws, request) => {
-            var _a, _b, _c, _d, _e;
+            var _a, _b, _c, _d;
             const client = new Client_1.default(ws, this.config);
             const controllToken = (_b = new URLSearchParams((_a = request.url) !== null && _a !== void 0 ? _a : '').get('/controll_token')) === null || _b === void 0 ? void 0 : _b.toString();
-            console.log(((_c = this.channels['test']) !== null && _c !== void 0 ? _c : []).length);
             if (controllToken === this.config.token) {
                 ws.on('message', (val) => {
                     const message = val.toString();
@@ -51,7 +50,7 @@ class App {
                 });
                 return;
             }
-            const token = (_e = new URLSearchParams((_d = request.url) !== null && _d !== void 0 ? _d : '').get('/token')) === null || _e === void 0 ? void 0 : _e.toString();
+            const token = (_d = new URLSearchParams((_c = request.url) !== null && _c !== void 0 ? _c : '').get('/token')) === null || _d === void 0 ? void 0 : _d.toString();
             if (token) {
                 client.setToken(token);
             }
@@ -110,3 +109,4 @@ class App {
 }
 ;
 exports.default = App;
+//# sourceMappingURL=App.js.map

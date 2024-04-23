@@ -14,8 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 class Http {
-    constructor(config) {
+    constructor(config, socketId) {
         this.config = config;
+        this.socketId = socketId;
     }
     request(path, data) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23,7 +24,7 @@ class Http {
                 const result = yield axios_1.default.post(this.config.appHost + '/broadcasting/' + path, data, {
                     headers: {
                         'Content-Type': 'application/json',
-                        // 'X-Socket-ID': this.config.token,
+                        'X-Socket-ID': this.socketId,
                         'Controll-Token': this.config.token,
                         'Authorization': 'Bearer ' + this.token
                     }
@@ -56,3 +57,4 @@ class Http {
     }
 }
 exports.default = Http;
+//# sourceMappingURL=Http.js.map

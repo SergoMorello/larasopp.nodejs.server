@@ -4,11 +4,13 @@ import type {
 } from "./types";
 
 class Http {
-	private config: TConfig;
+	private readonly config: TConfig;
 	private token?: string;
+	private readonly socketId: string;
 
-	constructor(config: TConfig) {
+	constructor(config: TConfig, socketId: string) {
 		this.config = config;
+		this.socketId = socketId;
 	}
 
 	public async request(path: string, data: unknown) {
@@ -16,7 +18,7 @@ class Http {
 			const result = await axios.post(this.config.appHost + '/broadcasting/' + path, data ,{
 				headers: {
 					'Content-Type': 'application/json',
-					// 'X-Socket-ID': this.config.token,
+					'X-Socket-ID': this.socketId,
 					'Controll-Token': this.config.token,
 					'Authorization': 'Bearer ' + this.token
 				}

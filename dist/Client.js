@@ -13,10 +13,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const Http_1 = __importDefault(require("./Http"));
+const uuid_1 = require("uuid");
 class Client {
     constructor(ws, config) {
         this.ws = ws;
-        this.http = new Http_1.default(config);
+        this.socketId = (0, uuid_1.v4)();
+        this.http = new Http_1.default(config, this.socketId);
     }
     send(message) {
         this.ws.send(message);
@@ -36,3 +38,4 @@ class Client {
     }
 }
 exports.default = Client;
+//# sourceMappingURL=Client.js.map
