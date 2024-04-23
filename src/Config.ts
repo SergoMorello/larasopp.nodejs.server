@@ -8,7 +8,7 @@ class Config {
 	constructor() {
 		this.config = {
 			appHost: 'http://127.0.0.1:8000',
-			token: '',
+			key: '',
 			port: 3001
 		};
 		this.readConfig();
@@ -32,8 +32,8 @@ class Config {
 		return this.config.port;
 	}
 
-	public get token() {
-		return this.config.token;
+	public get key() {
+		return this.config.key;
 	}
 
 	public getConfig(): TConfig {

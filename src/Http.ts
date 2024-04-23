@@ -17,7 +17,7 @@ class Http {
 				headers: {
 					'Content-Type': 'application/json',
 					'X-Socket-ID': this.socketId,
-					'Controll-Token': this.config.token,
+					'Controll-Token': this.config.key,
 					'Authorization': 'Bearer ' + this.token
 				}
 			});
@@ -35,8 +35,7 @@ class Http {
 
 	public async check(channel: string) {
 		return (await this.request('auth', {
-			channel,
-			token: this.config.token
+			channel
 		}))?.success ?? false;
 	}
 

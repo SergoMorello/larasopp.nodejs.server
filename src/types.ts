@@ -4,7 +4,7 @@ export type TChannels = {
 };
 
 export type TConfig = {
-	token: string;
+	key: string;
 	host?: string;
 	port: number;
 	appHost: string;

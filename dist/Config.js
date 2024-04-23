@@ -9,7 +9,7 @@ class Config {
         this.configFile = 'larasopp-server.json';
         this.config = {
             appHost: 'http://127.0.0.1:8000',
-            token: '',
+            key: '',
             port: 3001
         };
         this.readConfig();
@@ -29,8 +29,8 @@ class Config {
     get port() {
         return this.config.port;
     }
-    get token() {
-        return this.config.token;
+    get key() {
+        return this.config.key;
     }
     getConfig() {
         return this.config;

@@ -37,8 +37,8 @@ class Server {
         this.wss.on('connection', (ws, request) => {
             var _a, _b, _c, _d;
             const client = new Client_1.default(ws, this.config);
-            const controllToken = (_b = new URLSearchParams((_a = request.url) !== null && _a !== void 0 ? _a : '').get('/controll_token')) === null || _b === void 0 ? void 0 : _b.toString();
-            if (controllToken === this.config.token) {
+            const controllKey = (_b = new URLSearchParams((_a = request.url) !== null && _a !== void 0 ? _a : '').get('/controll_token')) === null || _b === void 0 ? void 0 : _b.toString();
+            if (controllKey === this.config.key) {
                 ws.on('message', (val) => {
                     const message = val.toString();
                     const data = JSON.parse(message);

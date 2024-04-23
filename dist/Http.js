@@ -25,7 +25,7 @@ class Http {
                     headers: {
                         'Content-Type': 'application/json',
                         'X-Socket-ID': this.socketId,
-                        'Controll-Token': this.config.token,
+                        'Controll-Token': this.config.key,
                         'Authorization': 'Bearer ' + this.token
                     }
                 });
@@ -47,8 +47,7 @@ class Http {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
             return (_b = (_a = (yield this.request('auth', {
-                channel,
-                token: this.config.token
+                channel
             }))) === null || _a === void 0 ? void 0 : _a.success) !== null && _b !== void 0 ? _b : false;
         });
     }

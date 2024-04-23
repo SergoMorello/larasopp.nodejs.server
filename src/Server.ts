@@ -35,9 +35,9 @@ class Server {
 
 		this.wss.on('connection', (ws, request) => {
 			const client = new Client(ws, this.config);
-			const controllToken = new URLSearchParams(request.url ?? '').get('/controll_token')?.toString();
+			const controllKey = new URLSearchParams(request.url ?? '').get('/controll_token')?.toString();
 			
-			if (controllToken === this.config.token) {
+			if (controllKey === this.config.key) {
 				ws.on('message', (val) => {
 					const message = val.toString();
 					const data = JSON.parse(message);
