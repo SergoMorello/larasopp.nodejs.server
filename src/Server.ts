@@ -69,6 +69,8 @@ class Server {
 				const message = val.toString();
 				const data = JSON.parse(message);
 
+				if (data.token) client.setToken(data.token);
+
 				if (data.subscribe) this.subscribe(data.subscribe, client);
 
 				if (data.unsubscribe) this.unsubscribe(data.unsubscribe, client);

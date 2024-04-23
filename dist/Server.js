@@ -66,6 +66,8 @@ class Server {
             ws.on('message', (val) => {
                 const message = val.toString();
                 const data = JSON.parse(message);
+                if (data.token)
+                    client.setToken(data.token);
                 if (data.subscribe)
                     this.subscribe(data.subscribe, client);
                 if (data.unsubscribe)
