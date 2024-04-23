@@ -1,3 +1,3 @@
-import App from "./App";
+import Server from "./Server";
 
-new App;
+new Server();

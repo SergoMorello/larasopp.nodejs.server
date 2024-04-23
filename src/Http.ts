@@ -1,14 +1,12 @@
 import axios from "axios";
-import type {
-	TConfig
-} from "./types";
+import type Config from "./Config";
 
 class Http {
-	private readonly config: TConfig;
+	private readonly config: Config;
 	private token?: string;
 	private readonly socketId: string;
 
-	constructor(config: TConfig, socketId: string) {
+	constructor(config: Config, socketId: string) {
 		this.config = config;
 		this.socketId = socketId;
 	}

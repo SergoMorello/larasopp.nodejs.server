@@ -1,33 +1,33 @@
 import WebSocket from "ws";
 import Client from "./Client";
+import Config from "./Config";
 import type {
-	TConfig,
 	TChannelAccess,
 	TChannels
 } from "./types";
 
-class App {
+class Server {
 	private wss: WebSocket.Server;
 	private channels: TChannels;
-	private config: TConfig;
+	private config: Config;
 	
 	constructor() {
 		this.channels = {};
-		this.config = {
-			appHost: 'http://127.0.0.1:8000',
-			token: '1234',
-			port: 3001,
-			controllPort: 8123
-		};
+		this.config = new Config();
 
 		this.wss = new WebSocket.Server({
-			port: this.config.port
+			port: this.config.port,
+			host: this.config.host
 		});
 		
 		this.run();
 	}
 
 	private run() {
+		console.log('Larasopp Server');
+		console.log('Host: ' + (this.config.host ?? '0.0.0.0'));
+		console.log('Port: ' + this.config.port);
+		console.log('Api Host: ' + this.config.appHost);
 
 		this.wss.on('listening', () => {
 			console.info('listening...');
@@ -57,9 +57,9 @@ class App {
 				client.setToken(token);
 			}
 
-			console.log('new client');
+			console.log('join ' + client.socketId);
 			ws.on('close', () => {
-				console.log('client leave');
+				console.log('leave ' + client.socketId);
 				Object.keys(this.channels).forEach((channel) => {
 					this.unsubscribe(channel, client);
 				});
@@ -114,4 +114,4 @@ class App {
 
 };
 
-export default App;
+export default Server;

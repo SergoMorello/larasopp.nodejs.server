@@ -1,14 +1,14 @@
 import WebSocket from "ws";
 import Http from "./Http";
 import { v4 as uuidv4 } from "uuid";
-import type { TConfig } from "./types";
+import type Config from "./Config";
 
 class Client {
 	private readonly ws: WebSocket;
 	public readonly socketId: string;
 	private http: Http;
 
-	constructor(ws: WebSocket, config: TConfig) {
+	constructor(ws: WebSocket, config: Config) {
 		this.ws = ws;
 		this.socketId = uuidv4();
 		this.http = new Http(config, this.socketId);
