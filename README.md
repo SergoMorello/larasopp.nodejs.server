@@ -26,8 +26,16 @@ npx larasopp-server start
 ```json
 {
 	"appHost": "http://127.0.0.1:8000",
-	"token": "token",
+	"key": "secret key",
 	"host": "0.0.0.0",
-	"port": 3001
+	"port": 3001,
+	"debug": true,
+	"log": true,
+	"logPath": "./",
+	// "ssl": {
+	// 	"cert": "",
+	// 	"key": "",
+	// 	"ca": ""
+	// }
 }
 ```
