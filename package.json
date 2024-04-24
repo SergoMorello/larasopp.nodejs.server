@@ -1,6 +1,6 @@
 {
   "name": "larasopp-server",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Websocket server for laravel",
   "preferGlobal": true,
   "main": "dist/index.js",
