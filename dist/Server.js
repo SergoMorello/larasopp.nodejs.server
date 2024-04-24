@@ -22,15 +22,17 @@ class Server extends Core_1.default {
         super();
         this.channels = {};
         const server = this.config.ssl ? https_1.default.createServer({
-            cert: fs_1.default.readFileSync(this.config.ssl.cert),
-            key: fs_1.default.readFileSync(this.config.ssl.key),
-            ca: fs_1.default.readFileSync(this.config.ssl.ca)
+            cert: this.config.ssl.cert ? fs_1.default.readFileSync(this.config.ssl.cert) : undefined,
+            key: this.config.ssl.key ? fs_1.default.readFileSync(this.config.ssl.key) : undefined,
+            ca: this.config.ssl.ca ? fs_1.default.readFileSync(this.config.ssl.ca) : undefined
         }) : undefined;
         this.wss = new ws_1.default.Server({
             port: this.config.port,
             host: this.config.host,
             server
         });
+        if (this.config.ssl && server)
+            server.listen(this.config.port);
         this.run();
     }
     run() {

@@ -18,16 +18,20 @@ class Server extends Core {
 		this.channels = {};
 
 		const server = this.config.ssl ? Https.createServer({
-			cert: FS.readFileSync(this.config.ssl.cert),
-			key: FS.readFileSync(this.config.ssl.key),
-			ca: FS.readFileSync(this.config.ssl.ca)
+			cert: this.config.ssl.cert ? FS.readFileSync(this.config.ssl.cert) : undefined,
+			key: this.config.ssl.key ? FS.readFileSync(this.config.ssl.key) : undefined,
+			ca: this.config.ssl.ca ? FS.readFileSync(this.config.ssl.ca) : undefined
 		}) : undefined;
+
+		
 
 		this.wss = new WebSocket.Server({
 			port: this.config.port,
 			host: this.config.host,
 			server
 		});
+
+		if (this.config.ssl && server) server.listen(this.config.port);
 		
 		this.run();
 	}
