@@ -13,13 +13,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
-class Http {
-    constructor(config, socketId) {
-        this.config = config;
+const Core_1 = __importDefault(require("./Core"));
+class Http extends Core_1.default {
+    constructor(socketId) {
+        super();
         this.socketId = socketId;
     }
     request(path, data) {
         return __awaiter(this, void 0, void 0, function* () {
+            this.log.debug('HTTP request');
+            this.log.debug('path: ' + path);
+            this.log.debug('data: ' + data);
             try {
                 const result = yield axios_1.default.post(this.config.appHost + '/broadcasting/' + path, data, {
                     headers: {
@@ -29,6 +33,7 @@ class Http {
                         'Authorization': 'Bearer ' + this.token
                     }
                 });
+                this.log.debug('HTTP response: ' + result.data);
                 return result.data;
             }
             catch (e) { }

@@ -8,6 +8,9 @@ export type TConfig = {
 	host?: string;
 	port: number;
 	appHost: string;
+	debug?: boolean;
+	log?: boolean;
+	logPath?: string;
 };
 
 export type TChannelAccess = 'private' | 'public' | 'protected';

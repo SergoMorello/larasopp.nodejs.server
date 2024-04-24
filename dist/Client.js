@@ -14,11 +14,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const Http_1 = __importDefault(require("./Http"));
 const uuid_1 = require("uuid");
-class Client {
-    constructor(ws, config) {
+const Core_1 = __importDefault(require("./Core"));
+class Client extends Core_1.default {
+    constructor(ws) {
+        super();
         this.ws = ws;
         this.socketId = (0, uuid_1.v4)();
-        this.http = new Http_1.default(config, this.socketId);
+        this.http = new Http_1.default(this.socketId);
         this.send({
             socket_id: this.socketId
         });

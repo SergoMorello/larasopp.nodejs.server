@@ -1,17 +1,19 @@
 import axios from "axios";
-import type Config from "./Config";
+import Core from "./Core";
 
-class Http {
-	private readonly config: Config;
+class Http extends Core {
 	private token?: string;
 	private readonly socketId: string;
 
-	constructor(config: Config, socketId: string) {
-		this.config = config;
+	constructor(socketId: string) {
+		super();
 		this.socketId = socketId;
 	}
 
 	public async request(path: string, data: unknown) {
+		this.log.debug('HTTP request');
+		this.log.debug('path: ' + path);
+		this.log.debug('data: ' + data);
 		try {
 			const result = await axios.post(this.config.appHost + '/broadcasting/' + path, data ,{
 				headers: {
@@ -21,6 +23,7 @@ class Http {
 					'Authorization': 'Bearer ' + this.token
 				}
 			});
+			this.log.debug('HTTP response: ' + result.data);
 			return result.data;
 		}catch(e) {}
 	}

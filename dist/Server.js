@@ -13,12 +13,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ws_1 = __importDefault(require("ws"));
+const Core_1 = __importDefault(require("./Core"));
 const Client_1 = __importDefault(require("./Client"));
-const Config_1 = __importDefault(require("./Config"));
-class Server {
+class Server extends Core_1.default {
     constructor() {
+        super();
         this.channels = {};
-        this.config = new Config_1.default();
         this.wss = new ws_1.default.Server({
             port: this.config.port,
             host: this.config.host
@@ -27,20 +27,26 @@ class Server {
     }
     run() {
         var _a;
-        console.log('Larasopp Server');
-        console.log('Host: ' + ((_a = this.config.host) !== null && _a !== void 0 ? _a : '0.0.0.0'));
-        console.log('Port: ' + this.config.port);
-        console.log('Api Host: ' + this.config.appHost);
+        this.log.info('Larasopp Server');
+        this.log.info('Host: ' + ((_a = this.config.host) !== null && _a !== void 0 ? _a : '0.0.0.0'));
+        this.log.info('Port: ' + this.config.port);
+        this.log.info('Api Host: ' + this.config.appHost);
         this.wss.on('listening', () => {
-            console.info('listening...');
+            this.log.info('listening...');
         });
         this.wss.on('connection', (ws, request) => {
             var _a, _b, _c, _d;
-            const client = new Client_1.default(ws, this.config);
-            const controllKey = (_b = new URLSearchParams((_a = request.url) !== null && _a !== void 0 ? _a : '').get('/controll_token')) === null || _b === void 0 ? void 0 : _b.toString();
-            if (controllKey === this.config.key) {
+            const client = new Client_1.default(ws);
+            this.log.debug('new client ' + client.socketId);
+            this.log.debug('IP ' + request.socket.remoteAddress);
+            const key = (_b = new URLSearchParams((_a = request.url) !== null && _a !== void 0 ? _a : '').get('/key')) === null || _b === void 0 ? void 0 : _b.toString();
+            if (key)
+                this.log.debug('try entry with key: ' + key);
+            if (key === this.config.key) {
+                this.log.debug('auth key: ' + key);
                 ws.on('message', (val) => {
                     const message = val.toString();
+                    this.log.debug('command message: ' + message);
                     const data = JSON.parse(message);
                     if (data.channel && data.event && data.message) {
                         if (this.channels[data.channel]) {
@@ -56,9 +62,8 @@ class Server {
             if (token) {
                 client.setToken(token);
             }
-            console.log('join ' + client.socketId);
             ws.on('close', () => {
-                console.log('leave ' + client.socketId);
+                this.log.info('leave ' + client.socketId);
                 Object.keys(this.channels).forEach((channel) => {
                     this.unsubscribe(channel, client);
                 });
@@ -66,6 +71,7 @@ class Server {
             ws.on('message', (val) => {
                 const message = val.toString();
                 const data = JSON.parse(message);
+                this.log.debug('client message: ' + message);
                 if (data.token)
                     client.setToken(data.token);
                 if (data.subscribe)
@@ -85,12 +91,14 @@ class Server {
                 this.channels[channel] = [];
             }
             if (!this.hasChannelClient(channel, client)) {
+                this.log.debug('client subscribe: ' + client.socketId);
                 this.channels[channel].push(client);
             }
         });
     }
     unsubscribe(channel, client) {
         if (this.channels[channel]) {
+            this.log.debug('client unsubscribe: ' + client.socketId);
             this.channels[channel] = this.channels[channel].filter((currentClient) => currentClient !== client);
         }
     }

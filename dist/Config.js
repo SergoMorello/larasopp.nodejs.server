@@ -10,7 +10,10 @@ class Config {
         this.config = {
             appHost: 'http://127.0.0.1:8000',
             key: '',
-            port: 3001
+            port: 3001,
+            debug: false,
+            log: false,
+            logPath: './'
         };
         this.readConfig();
     }
@@ -31,6 +34,15 @@ class Config {
     }
     get key() {
         return this.config.key;
+    }
+    get debug() {
+        return this.config.debug;
+    }
+    get log() {
+        return this.config.log;
+    }
+    get logPath() {
+        return this.config.logPath;
     }
     getConfig() {
         return this.config;

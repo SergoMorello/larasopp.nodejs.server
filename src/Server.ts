@@ -1,19 +1,21 @@
 import WebSocket from "ws";
+import Core from "./Core";
 import Client from "./Client";
 import Config from "./Config";
+import Log from "./Log";
 import type {
 	TChannelAccess,
 	TChannels
 } from "./types";
 
-class Server {
+
+class Server extends Core {
 	private wss: WebSocket.Server;
 	private channels: TChannels;
-	private config: Config;
 	
 	constructor() {
+		super();
 		this.channels = {};
-		this.config = new Config();
 
 		this.wss = new WebSocket.Server({
 			port: this.config.port,
@@ -24,22 +26,28 @@ class Server {
 	}
 
 	private run() {
-		console.log('Larasopp Server');
-		console.log('Host: ' + (this.config.host ?? '0.0.0.0'));
-		console.log('Port: ' + this.config.port);
-		console.log('Api Host: ' + this.config.appHost);
+		this.log.info('Larasopp Server');
+		this.log.info('Host: ' + (this.config.host ?? '0.0.0.0'));
+		this.log.info('Port: ' + this.config.port);
+		this.log.info('Api Host: ' + this.config.appHost);
 
 		this.wss.on('listening', () => {
-			console.info('listening...');
+			this.log.info('listening...');
 		});
 
 		this.wss.on('connection', (ws, request) => {
-			const client = new Client(ws, this.config);
-			const controllKey = new URLSearchParams(request.url ?? '').get('/controll_token')?.toString();
-			
-			if (controllKey === this.config.key) {
+			const client = new Client(ws);
+			this.log.debug('new client ' + client.socketId);
+			this.log.debug('IP ' + request.socket.remoteAddress);
+
+			const key = new URLSearchParams(request.url ?? '').get('/key')?.toString();
+			if (key) this.log.debug('try entry with key: ' + key);
+
+			if (key === this.config.key) {
+				this.log.debug('auth key: ' + key);
 				ws.on('message', (val) => {
 					const message = val.toString();
+					this.log.debug('command message: ' + message);
 					const data = JSON.parse(message);
 					if (data.channel && data.event && data.message) {
 						if (this.channels[data.channel]) {
@@ -57,9 +65,8 @@ class Server {
 				client.setToken(token);
 			}
 
-			console.log('join ' + client.socketId);
 			ws.on('close', () => {
-				console.log('leave ' + client.socketId);
+				this.log.info('leave ' + client.socketId);
 				Object.keys(this.channels).forEach((channel) => {
 					this.unsubscribe(channel, client);
 				});
@@ -68,6 +75,7 @@ class Server {
 			ws.on('message', (val) => {
 				const message = val.toString();
 				const data = JSON.parse(message);
+				this.log.debug('client message: ' + message);
 
 				if (data.token) client.setToken(data.token);
 
@@ -86,12 +94,14 @@ class Server {
 			this.channels[channel] = [];
 		}
 		if (!this.hasChannelClient(channel, client)) {
+			this.log.debug('client subscribe: ' + client.socketId);
 			this.channels[channel].push(client);
 		}
 	}
 
 	private unsubscribe(channel: string, client: Client) {
 		if (this.channels[channel]) {
+			this.log.debug('client unsubscribe: ' + client.socketId);
 			this.channels[channel] = this.channels[channel].filter((currentClient) => currentClient !== client);
 		}
 	}
