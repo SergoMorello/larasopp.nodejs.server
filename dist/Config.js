@@ -44,6 +44,9 @@ class Config {
     get logPath() {
         return this.config.logPath;
     }
+    get ssl() {
+        return this.config.ssl;
+    }
     getConfig() {
         return this.config;
     }

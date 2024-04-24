@@ -51,6 +51,10 @@ class Config {
 		return this.config.logPath;
 	}
 
+	public get ssl() {
+		return this.config.ssl;
+	}
+
 	public getConfig(): TConfig {
 		return this.config;
 	}

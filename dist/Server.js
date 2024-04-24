@@ -13,15 +13,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ws_1 = __importDefault(require("ws"));
+const https_1 = __importDefault(require("https"));
+const fs_1 = __importDefault(require("fs"));
 const Core_1 = __importDefault(require("./Core"));
 const Client_1 = __importDefault(require("./Client"));
 class Server extends Core_1.default {
     constructor() {
         super();
         this.channels = {};
+        const server = this.config.ssl ? https_1.default.createServer({
+            cert: fs_1.default.readFileSync(this.config.ssl.cert),
+            key: fs_1.default.readFileSync(this.config.ssl.key),
+            ca: fs_1.default.readFileSync(this.config.ssl.ca)
+        }) : undefined;
         this.wss = new ws_1.default.Server({
             port: this.config.port,
-            host: this.config.host
+            host: this.config.host,
+            server
         });
         this.run();
     }

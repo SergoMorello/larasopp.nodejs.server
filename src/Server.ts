@@ -1,8 +1,8 @@
 import WebSocket from "ws";
+import Https from "https";
+import FS from "fs";
 import Core from "./Core";
 import Client from "./Client";
-import Config from "./Config";
-import Log from "./Log";
 import type {
 	TChannelAccess,
 	TChannels
@@ -17,9 +17,16 @@ class Server extends Core {
 		super();
 		this.channels = {};
 
+		const server = this.config.ssl ? Https.createServer({
+			cert: FS.readFileSync(this.config.ssl.cert),
+			key: FS.readFileSync(this.config.ssl.key),
+			ca: FS.readFileSync(this.config.ssl.ca)
+		}) : undefined;
+
 		this.wss = new WebSocket.Server({
 			port: this.config.port,
-			host: this.config.host
+			host: this.config.host,
+			server
 		});
 		
 		this.run();

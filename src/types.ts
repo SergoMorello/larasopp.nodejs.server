@@ -11,6 +11,11 @@ export type TConfig = {
 	debug?: boolean;
 	log?: boolean;
 	logPath?: string;
+	ssl?: {
+		cert: string;
+		key: string;
+		ca: string;
+	};
 };
 
 export type TChannelAccess = 'private' | 'public' | 'protected';
