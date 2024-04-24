@@ -21,23 +21,30 @@ class Server extends Core_1.default {
     constructor() {
         super();
         this.channels = {};
-        const server = this.config.ssl ? https_1.default.createServer({
-            cert: this.config.ssl.cert ? fs_1.default.readFileSync(this.config.ssl.cert) : undefined,
-            key: this.config.ssl.key ? fs_1.default.readFileSync(this.config.ssl.key) : undefined,
-            ca: this.config.ssl.ca ? fs_1.default.readFileSync(this.config.ssl.ca) : undefined
-        }) : undefined;
-        this.wss = new ws_1.default.Server({
-            port: this.config.port,
-            host: this.config.host,
-            server
-        });
-        if (this.config.ssl && server)
+        if (this.config.ssl) {
+            const server = https_1.default.createServer({
+                cert: this.config.ssl.cert ? fs_1.default.readFileSync(this.config.ssl.cert) : undefined,
+                key: this.config.ssl.key ? fs_1.default.readFileSync(this.config.ssl.key) : undefined,
+                ca: this.config.ssl.ca ? fs_1.default.readFileSync(this.config.ssl.ca) : undefined
+            });
+            this.wss = new ws_1.default.Server({
+                host: this.config.host,
+                server
+            });
             server.listen(this.config.port);
+        }
+        else {
+            this.wss = new ws_1.default.Server({
+                port: this.config.port,
+                host: this.config.host
+            });
+        }
         this.run();
     }
     run() {
         var _a;
         this.log.info('Larasopp Server');
+        this.log.info('SSL: ' + (this.config.ssl ? true : false));
         this.log.info('Host: ' + ((_a = this.config.host) !== null && _a !== void 0 ? _a : '0.0.0.0'));
         this.log.info('Port: ' + this.config.port);
         this.log.info('Api Host: ' + this.config.appHost);

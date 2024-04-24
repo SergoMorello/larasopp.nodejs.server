@@ -17,27 +17,33 @@ class Server extends Core {
 		super();
 		this.channels = {};
 
-		const server = this.config.ssl ? Https.createServer({
-			cert: this.config.ssl.cert ? FS.readFileSync(this.config.ssl.cert) : undefined,
-			key: this.config.ssl.key ? FS.readFileSync(this.config.ssl.key) : undefined,
-			ca: this.config.ssl.ca ? FS.readFileSync(this.config.ssl.ca) : undefined
-		}) : undefined;
+		if (this.config.ssl) {
+			const server =  Https.createServer({
+				cert: this.config.ssl.cert ? FS.readFileSync(this.config.ssl.cert) : undefined,
+				key: this.config.ssl.key ? FS.readFileSync(this.config.ssl.key) : undefined,
+				ca: this.config.ssl.ca ? FS.readFileSync(this.config.ssl.ca) : undefined
+			});
+			
+			this.wss = new WebSocket.Server({
+				host: this.config.host,
+				server
+			});
 
-		
+			server.listen(this.config.port);
+		}else{
+			this.wss = new WebSocket.Server({
+				port: this.config.port,
+				host: this.config.host
+			});
+		}
 
-		this.wss = new WebSocket.Server({
-			port: this.config.port,
-			host: this.config.host,
-			server
-		});
-
-		if (this.config.ssl && server) server.listen(this.config.port);
 		
 		this.run();
 	}
 
 	private run() {
 		this.log.info('Larasopp Server');
+		this.log.info('SSL: ' + (this.config.ssl ? true : false));
 		this.log.info('Host: ' + (this.config.host ?? '0.0.0.0'));
 		this.log.info('Port: ' + this.config.port);
 		this.log.info('Api Host: ' + this.config.appHost);
