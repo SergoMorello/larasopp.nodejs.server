@@ -21,22 +21,25 @@ class Http extends Core_1.default {
     }
     request(path, data) {
         return __awaiter(this, void 0, void 0, function* () {
+            data['socket_id'] = this.socketId;
             this.log.debug('HTTP request');
-            this.log.debug('path: ' + path);
-            this.log.debug('data: ' + data);
+            this.log.debug('HTTP path: ' + path);
+            this.log.debug('HTTP data: ' + JSON.stringify(data));
             try {
                 const result = yield axios_1.default.post(this.config.appHost + '/broadcasting/' + path, data, {
                     headers: {
                         'Content-Type': 'application/json',
                         'X-Socket-ID': this.socketId,
-                        'Controll-Token': this.config.key,
+                        'Controll-Key': this.config.key,
                         'Authorization': 'Bearer ' + this.token
                     }
                 });
-                this.log.debug('HTTP response: ' + result.data);
+                this.log.debug('HTTP response: ' + JSON.stringify(result.data));
                 return result.data;
             }
-            catch (e) { }
+            catch (e) {
+                this.log.debug('HTTP error: ' + e);
+            }
         });
     }
     trigger(channel, event, message) {
@@ -48,12 +51,11 @@ class Http extends Core_1.default {
             });
         });
     }
-    check(channel) {
+    auth(channel) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b;
-            return (_b = (_a = (yield this.request('auth', {
+            return (yield this.request('auth', {
                 channel
-            }))) === null || _a === void 0 ? void 0 : _a.success) !== null && _b !== void 0 ? _b : false;
+            }));
         });
     }
     setToken(token) {

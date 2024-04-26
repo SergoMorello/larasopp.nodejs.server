@@ -1,6 +1,11 @@
 import axios from "axios";
 import Core from "./Core";
 
+type THttpRequestData = {
+	socket_id?: string;
+	[index: string]: unknown;
+};
+
 class Http extends Core {
 	private token?: string;
 	private readonly socketId: string;
@@ -10,22 +15,25 @@ class Http extends Core {
 		this.socketId = socketId;
 	}
 
-	public async request(path: string, data: unknown) {
+	public async request(path: string, data: THttpRequestData) {
+		data['socket_id'] = this.socketId;
 		this.log.debug('HTTP request');
-		this.log.debug('path: ' + path);
-		this.log.debug('data: ' + data);
+		this.log.debug('HTTP path: ' + path);
+		this.log.debug('HTTP data: ' + JSON.stringify(data));
 		try {
 			const result = await axios.post(this.config.appHost + '/broadcasting/' + path, data ,{
 				headers: {
 					'Content-Type': 'application/json',
 					'X-Socket-ID': this.socketId,
-					'Controll-Token': this.config.key,
+					'Controll-Key': this.config.key,
 					'Authorization': 'Bearer ' + this.token
 				}
 			});
-			this.log.debug('HTTP response: ' + result.data);
+			this.log.debug('HTTP response: ' + JSON.stringify(result.data));
 			return result.data;
-		}catch(e) {}
+		}catch(e) {
+			this.log.debug('HTTP error: ' + e);
+		}
 	}
 
 	public async trigger(channel: string, event: string, message: unknown) {
@@ -36,10 +44,10 @@ class Http extends Core {
 		});
 	}
 
-	public async check(channel: string) {
+	public async auth(channel: string) {
 		return (await this.request('auth', {
 			channel
-		}))?.success ?? false;
+		}));
 	}
 
 	public setToken(token: string) {

@@ -1,17 +1,19 @@
 import WebSocket from "ws";
 import Http from "./Http";
 import { v4 as uuidv4 } from "uuid";
-import type Config from "./Config";
+import type { TChannelAccess, TChannelsData } from "./types";
 import Core from "./Core";
 
 class Client extends Core {
 	private readonly ws: WebSocket;
 	public readonly socketId: string;
 	private http: Http;
+	private presenceChannels: TChannelsData;
 
 	constructor(ws: WebSocket) {
 		super();
 		this.ws = ws;
+		this.presenceChannels = {};
 		this.socketId = uuidv4();
 		this.http = new Http(this.socketId);
 		this.send({
@@ -30,12 +32,31 @@ class Client extends Core {
 		this.http.setToken(token);
 	}
 
-	public async trigger(channel: string, event: string, message: unknown) {
-		return await this.http.trigger(channel, event, message);
+	public getPresenceChannelData(channel: string) {
+		return this.presenceChannels[channel];
 	}
 
-	public async check(channel: string) {
-		return await this.http.check(channel);
+	public getPresenceChannels() {
+		return Object.entries(this.presenceChannels);
+	}
+
+	public trigger(channel: string, event: string, message: string | object, access: TChannelAccess = 'public') {
+		if (access !== 'private') {
+			this.send({
+				channel,
+				event,
+				message
+			});
+		}
+		if (access === 'public' || access === 'private') {
+			this.http.trigger(channel, event, message);
+		}
+	}
+
+	public async auth(channel: string) {
+		const result = await this.http.auth(channel);
+		this.presenceChannels[channel] = result;
+		return result ? true : false;
 	}
 }
 

@@ -100,19 +100,24 @@ class Server extends Core {
 
 				if (data.unsubscribe) this.unsubscribe(data.unsubscribe, client);
 
-				if (data.channel && data.event && data.message && data.type) this.message(data.channel, data.event, message, data.type, client);
+				if (data.channel && data.event && data.message && data.type) this.message(data.channel, data.event, data.message, data.type, client);
 			});
 		});
 	}
 
 	private async subscribe(channel: string, client: Client) {
-		if (!(await client.check(channel))) return;
+		if (!(await client.auth(channel))) return;
 		if (!this.channels[channel]) {
 			this.channels[channel] = [];
 		}
 		if (!this.hasChannelClient(channel, client)) {
+			const channelData = this.channels[channel].map((channelClient) => channelClient.getPresenceChannelData(channel));
+			client.trigger(channel, '__HERE', channelData, 'protected');
+
 			this.log.debug('client subscribe: ' + client.socketId);
 			this.channels[channel].push(client);
+
+			this.message(channel, '__JOIN', client.getPresenceChannelData(channel), 'protected', client);
 		}
 	}
 
@@ -120,20 +125,28 @@ class Server extends Core {
 		if (this.channels[channel]) {
 			this.log.debug('client unsubscribe: ' + client.socketId);
 			this.channels[channel] = this.channels[channel].filter((currentClient) => currentClient !== client);
+
+			this.channels[channel].forEach((channelClient) => channelClient.trigger(channel, '__LEAVE', client.getPresenceChannelData(channel), 'protected'));
+			
 		}
 	}
 
-	private message(channel: string, event: string, message: string, access: TChannelAccess, client: Client) {
+	private message(channel: string, event: string, message: object, access: TChannelAccess, client: Client) {
 		if (this.channels[channel] && this.hasChannelClient(channel, client)) {
 			if (access === 'public' || access === 'protected') {
-				this.channels[channel].forEach((client) => {
-					client.send(message);
+				this.channels[channel].forEach((channelClient) => {
+					if (channelClient.socketId !== client.socketId) channelClient.trigger(channel, event, message, 'protected');
 				});
 			}
 			if (access === 'public' || access === 'private') {
-				const data = JSON.parse(message);
-				client.trigger(channel, event, data.message);
+				client.trigger(channel, event, message, access);
 			}
+		}
+	}
+
+	private messages(channel: string, event: string, message: object) {
+		if (this.channels[channel]) {
+			this.channels[channel].forEach((client) => client.trigger(channel, event, message, 'protected'));
 		}
 	}
 

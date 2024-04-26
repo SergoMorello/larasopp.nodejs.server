@@ -19,6 +19,7 @@ class Client extends Core_1.default {
     constructor(ws) {
         super();
         this.ws = ws;
+        this.presenceChannels = {};
         this.socketId = (0, uuid_1.v4)();
         this.http = new Http_1.default(this.socketId);
         this.send({
@@ -35,14 +36,29 @@ class Client extends Core_1.default {
     setToken(token) {
         this.http.setToken(token);
     }
-    trigger(channel, event, message) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.http.trigger(channel, event, message);
-        });
+    getPresenceChannelData(channel) {
+        return this.presenceChannels[channel];
     }
-    check(channel) {
+    getPresenceChannels() {
+        return Object.entries(this.presenceChannels);
+    }
+    trigger(channel, event, message, access = 'public') {
+        if (access !== 'private') {
+            this.send({
+                channel,
+                event,
+                message
+            });
+        }
+        if (access === 'public' || access === 'private') {
+            this.http.trigger(channel, event, message);
+        }
+    }
+    auth(channel) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.http.check(channel);
+            const result = yield this.http.auth(channel);
+            this.presenceChannels[channel] = result;
+            return result ? true : false;
         });
     }
 }

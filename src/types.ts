@@ -1,6 +1,11 @@
 import type Client from "./Client";
+
 export type TChannels = {
 	[name: string]: Client[];
+};
+
+export type TChannelsData = {
+	[name: string]: object;
 };
 
 export type TConfig = {
