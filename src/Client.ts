@@ -24,6 +24,7 @@ class Client extends Core {
 	public send(message: string | object) {
 		try {
 			const sendMessage = typeof message === 'string' ? message : JSON.stringify(message);
+			this.log.debug('WS message: ' + sendMessage);
 			this.ws.send(sendMessage);
 		}catch(e){}
 	}
