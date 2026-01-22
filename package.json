@@ -1,6 +1,6 @@
 {
   "name": "larasopp-server",
-  "version": "0.0.10",
+  "version": "0.1.0",
   "description": "Websocket server for laravel",
   "preferGlobal": true,
   "main": "dist/index.js",
@@ -8,11 +8,11 @@
   "scripts": {
     "build": "tsc",
     "start": "tsc && node .",
-	"prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build"
   },
   "files": [
     "bin",
-	"dist"
+    "dist"
   ],
   "author": "Sergey Serov",
   "license": "MIT",
