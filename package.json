@@ -7,8 +7,13 @@
   "bin": "bin/main.js",
   "scripts": {
     "build": "tsc",
-    "start": "tsc && node ."
+    "start": "tsc && node .",
+	"prepublishOnly": "npm run build"
   },
+  "files": [
+    "bin",
+	"dist"
+  ],
   "author": "Sergey Serov",
   "license": "MIT",
   "devDependencies": {

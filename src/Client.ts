@@ -9,16 +9,32 @@ class Client extends Core {
 	public readonly socketId: string;
 	private http: Http;
 	private presenceChannels: TChannelsData;
+	private user: any;
 
-	constructor(ws: WebSocket) {
+	constructor(ws: WebSocket, token: string) {
 		super();
 		this.ws = ws;
 		this.presenceChannels = {};
 		this.socketId = uuidv4();
 		this.http = new Http(this.socketId);
+		this.http.setToken(token);
+		
 		this.send({
 			socket_id: this.socketId
 		});
+	}
+
+	public getUser() {
+		return this.user;
+	}
+
+	public async userAuth() {
+		const user = await this.http.userAuth();
+		return this.user = user;
+	}
+
+	public disconnect() {
+		this.ws.close();
 	}
 
 	public send(message: string | object) {
@@ -27,6 +43,13 @@ class Client extends Core {
 			this.log.debug('WS message: ' + sendMessage);
 			this.ws.send(sendMessage);
 		}catch(e){}
+	}
+
+	public error(message: string) {
+		this.send({
+			type: 'error',
+			message
+		});
 	}
 
 	public setToken(token: string) {

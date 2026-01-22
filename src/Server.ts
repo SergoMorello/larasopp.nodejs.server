@@ -3,19 +3,14 @@ import Https from "https";
 import FS from "fs";
 import Core from "./Core";
 import Client from "./Client";
-import type {
-	TChannelAccess,
-	TChannels
-} from "./types";
+import channels from "./Channels";
 
 
 class Server extends Core {
 	private wss: WebSocket.Server;
-	private channels: TChannels;
 	
 	constructor() {
 		super();
-		this.channels = {};
 
 		if (this.config.ssl) {
 			const server =  Https.createServer({
@@ -37,121 +32,123 @@ class Server extends Core {
 			});
 		}
 
-		
 		this.run();
 	}
 
 	private run() {
 		this.log.info('Larasopp Server');
-		this.log.info('SSL: ' + (this.config.ssl ? true : false));
-		this.log.info('Host: ' + (this.config.host ?? '0.0.0.0'));
-		this.log.info('Port: ' + this.config.port);
-		this.log.info('Api Host: ' + this.config.appHost);
+		this.log.info(`SSL: ${(this.config.ssl ? true : false)}`);
+		this.log.info(`Host: ${(this.config.host ?? '0.0.0.0')}`);
+		this.log.info(`Port: ${this.config.port}`);
+		this.log.info(`Api Host: ${this.config.appHost}`);
 
 		this.wss.on('listening', () => {
 			this.log.info('listening...');
 		});
 
 		this.wss.on('connection', (ws, request) => {
-			const client = new Client(ws);
-			this.log.debug('new client ' + client.socketId);
-			this.log.debug('IP ' + request.socket.remoteAddress);
+			this.log.debug(`New connect`);
+			this.log.debug(`ip: ${request.socket.remoteAddress}`);
 
-			const key = new URLSearchParams(request.url ?? '').get('/key')?.toString();
-			if (key) this.log.debug('try entry with key: ' + key);
+			const urlParams = new URLSearchParams(request.url ?? '');
+			const key = urlParams.get('/key');
+			const token = urlParams.get('/token');
+			
+			this.connectControll(ws, key);
 
-			if (key === this.config.key) {
-				this.log.debug('auth key: ' + key);
-				ws.on('message', (val) => {
+			this.connectClient(ws, token);
+
+		});
+	}
+
+	private connectControll(ws: WebSocket, key: string | null) {
+		if (key) this.log.debug(`try entry with key: ${key}`);
+		if (key === this.config.key) {
+			this.log.debug(`auth key: ${key}`);
+			ws.on('message', async (val) => {
+				try {
 					const message = val.toString();
-					this.log.debug('command message: ' + message);
+					this.log.debug(`command message: ${message}`);
 					const data = JSON.parse(message);
 					if (data.channel && data.event && data.message) {
-						if (this.channels[data.channel]) {
-							this.channels[data.channel].forEach((client) => {
-								client.send(message);
-							});
+						const channel = channels.getChannel(data.channel);
+						if (data.type === 'private') {
+							await channel.makePrivate();
 						}
+						channel.getClients().forEach((client) => {
+							client.send(message);
+						});
 					}
-				});
-				return;
-			}
-
-			const token = new URLSearchParams(request.url ?? '').get('/token')?.toString();
-			if (token) {
-				client.setToken(token);
-			}
-
-			ws.on('close', () => {
-				this.log.info('leave ' + client.socketId);
-				Object.keys(this.channels).forEach((channel) => {
-					this.unsubscribe(channel, client);
-				});
+				}catch(e){
+					this.log.error(String(e));
+				}
 			});
+		}
+	}
 
-			ws.on('message', (val) => {
+	private async connectClient(ws: WebSocket, token: string | null) {
+		if (!token) return;
+		
+		const client = new Client(ws, token);
+		const user = await client.userAuth();
+
+		if (!user) {
+			client.error('auth fail');
+			client.disconnect();
+			this.log.debug(`client auth fail: ${client.socketId}`);
+			return;
+		};
+		this.log.debug(`client id: ${client.socketId}`);
+
+		ws.on('close', () => {
+			this.log.debug(`Disconnected: ${client.socketId}`);
+			channels.getChannels().forEach((channel) => {
+				channel.unsubscribe(client);
+			});
+		});
+
+		ws.on('message', async (val) => {
+			try {
 				const message = val.toString();
 				const data = JSON.parse(message);
-				this.log.debug('client message: ' + message);
+				this.log.debug(`client message: ${message}`);
 
 				if (data.token) client.setToken(data.token);
+
+				if (data.me === true) client.send({
+					channel: '__SYSTEM',
+					event: 'user',
+					message: client.getUser()
+				});
+
+				if (data.me === 'refresh') client.send({
+					channel: '__SYSTEM',
+					event: 'user-refresh',
+					message: await client.userAuth()
+				});
 
 				if (data.subscribe) this.subscribe(data.subscribe, client);
 
 				if (data.unsubscribe) this.unsubscribe(data.unsubscribe, client);
 
-				if (data.channel && data.event && data.message && data.type) this.message(data.channel, data.event, data.message, data.type, client);
-			});
+				if (data.channel && data.event && data.message && data.type) {
+					const channel = channels.getChannel(data.channel);
+					channel.message(data.event, data.message, data.type, client);
+				}
+			}catch(e){
+				this.log.error(String(e));
+			}
 		});
 	}
 
-	private async subscribe(channel: string, client: Client) {
-		if (!(await client.auth(channel))) return;
-		if (!this.channels[channel]) {
-			this.channels[channel] = [];
-		}
-		if (!this.hasChannelClient(channel, client)) {
-			const channelData = this.channels[channel].map((channelClient) => channelClient.getPresenceChannelData(channel));
-			client.trigger(channel, '__HERE', channelData, 'protected');
-
-			this.log.debug('client subscribe: ' + client.socketId);
-			this.channels[channel].push(client);
-
-			this.message(channel, '__JOIN', client.getPresenceChannelData(channel), 'protected', client);
-		}
+	private async subscribe(name: string, client: Client) {
+		const channel = channels.getChannel(name);
+		await channel.subscribe(client);
 	}
 
-	private unsubscribe(channel: string, client: Client) {
-		if (this.channels[channel]) {
-			this.log.debug('client unsubscribe: ' + client.socketId);
-			this.channels[channel] = this.channels[channel].filter((currentClient) => currentClient !== client);
-
-			this.channels[channel].forEach((channelClient) => channelClient.trigger(channel, '__LEAVE', client.getPresenceChannelData(channel), 'protected'));
-			
-		}
-	}
-
-	private message(channel: string, event: string, message: object, access: TChannelAccess, client: Client) {
-		if (this.channels[channel] && this.hasChannelClient(channel, client)) {
-			if (access === 'public' || access === 'protected') {
-				this.channels[channel].forEach((channelClient) => {
-					if (channelClient.socketId !== client.socketId) channelClient.trigger(channel, event, message, 'protected');
-				});
-			}
-			if (access === 'public' || access === 'private') {
-				client.trigger(channel, event, message, access);
-			}
-		}
-	}
-
-	private messages(channel: string, event: string, message: object) {
-		if (this.channels[channel]) {
-			this.channels[channel].forEach((client) => client.trigger(channel, event, message, 'protected'));
-		}
-	}
-
-	private hasChannelClient(channel: string, client: Client) {
-		return this.channels[channel].includes(client);
+	private unsubscribe(name: string, client: Client) {
+		const channel = channels.getChannel(name);
+		channel.unsubscribe(client);
 	}
 
 };

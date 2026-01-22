@@ -16,15 +16,28 @@ const Http_1 = __importDefault(require("./Http"));
 const uuid_1 = require("uuid");
 const Core_1 = __importDefault(require("./Core"));
 class Client extends Core_1.default {
-    constructor(ws) {
+    constructor(ws, token) {
         super();
         this.ws = ws;
         this.presenceChannels = {};
         this.socketId = (0, uuid_1.v4)();
         this.http = new Http_1.default(this.socketId);
+        this.http.setToken(token);
         this.send({
             socket_id: this.socketId
         });
+    }
+    getUser() {
+        return this.user;
+    }
+    userAuth() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const user = yield this.http.userAuth();
+            return this.user = user;
+        });
+    }
+    disconnect() {
+        this.ws.close();
     }
     send(message) {
         try {
@@ -33,6 +46,12 @@ class Client extends Core_1.default {
             this.ws.send(sendMessage);
         }
         catch (e) { }
+    }
+    error(message) {
+        this.send({
+            type: 'error',
+            message
+        });
     }
     setToken(token) {
         this.http.setToken(token);

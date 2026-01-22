@@ -26,19 +26,19 @@ class Http extends Core_1.default {
             this.log.debug('HTTP path: ' + path);
             this.log.debug('HTTP data: ' + JSON.stringify(data));
             try {
-                const result = yield axios_1.default.post(this.config.appHost + '/broadcasting/' + path, data, {
+                const result = yield axios_1.default.post(`${this.config.appHost}/broadcasting/${path}`, data, {
                     headers: {
                         'Content-Type': 'application/json',
                         'X-Socket-ID': this.socketId,
                         'Controll-Key': this.config.key,
-                        'Authorization': 'Bearer ' + this.token
+                        'Authorization': `Bearer ${this.token}`
                     }
                 });
-                this.log.debug('HTTP response: ' + JSON.stringify(result.data));
+                this.log.debug(`HTTP response: ${JSON.stringify(result.data)}`);
                 return result.data;
             }
             catch (e) {
-                this.log.debug('HTTP error: ' + e);
+                this.log.debug(`HTTP error: ${JSON.stringify(e)}`);
             }
         });
     }
@@ -49,6 +49,14 @@ class Http extends Core_1.default {
                 event,
                 message
             });
+        });
+    }
+    userAuth() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                return (yield this.request('connect', {}));
+            }
+            catch (e) { }
         });
     }
     auth(channel) {

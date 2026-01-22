@@ -1,8 +1,4 @@
-import type Client from "./Client";
-
-export type TChannels = {
-	[name: string]: Client[];
-};
+import Client from "./Client";
 
 export type TChannelsData = {
 	[name: string]: object;
@@ -23,4 +19,10 @@ export type TConfig = {
 	};
 };
 
+
 export type TChannelAccess = 'private' | 'public' | 'protected';
+
+export type TChannel = {
+	type: TChannelAccess;
+	clients: Set<Client>;
+};
