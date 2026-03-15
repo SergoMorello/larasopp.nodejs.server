@@ -17,11 +17,7 @@ class Client extends Core {
 		this.presenceChannels = {};
 		this.socketId = uuidv4();
 		this.http = new Http(this.socketId);
-		this.http.setToken(token);
-		
-		this.send({
-			socket_id: this.socketId
-		});
+		this.http.setToken(token);	
 	}
 
 	public getUser() {
@@ -30,6 +26,9 @@ class Client extends Core {
 
 	public async userAuth() {
 		const user = await this.http.userAuth();
+		this.send({
+			socket_id: this.socketId
+		});
 		return this.user = user;
 	}
 
