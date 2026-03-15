@@ -25,11 +25,11 @@ class Client extends Core {
 	}
 
 	public async userAuth() {
-		const user = await this.http.userAuth();
+		this.user = await this.http.userAuth();
 		this.send({
 			socket_id: this.socketId
 		});
-		return this.user = user;
+		return this.user;
 	}
 
 	public disconnect() {
